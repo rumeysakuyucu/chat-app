@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Engellenen Kullanıcılar - Live Chat</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .blocked-container {
+            max-width: 600px;
+            margin: 50px auto;
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .blocked-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .blocked-header h2 {
+            color: var(--text-primary);
+            margin-bottom: 10px;
+        }
+        
+        .blocked-header p {
+            color: var(--text-secondary);
+        }
+        
+        .blocked-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .blocked-item {
+            background: var(--bg-primary);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .blocked-item-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .blocked-item-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        
+        .blocked-item-details h4 {
+            color: var(--text-primary);
+            margin-bottom: 5px;
+        }
+        
+        .blocked-item-details p {
+            color: var(--text-secondary);
+            font-size: 12px;
+        }
+        
+        .unblock-btn {
+            background: #10b981;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            padding: 8px 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .unblock-btn:hover {
+            background: #059669;
+            transform: translateY(-2px);
+        }
+        
+        .back-btn {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 10px 20px;
+            border-radius: 30px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.2s;
+        }
+        
+        .back-btn:hover {
+            background: var(--bg-tertiary);
+        }
+        
+        .no-blocked {
+            text-align: center;
+            color: var(--text-secondary);
+            padding: 40px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="blocked-container">
+        <div class="blocked-header">
+            <h2>🚫 Engellenen Kullanıcılar</h2>
+            <p>Engellediğiniz kullanıcılar burada listelenir</p>
+        </div>
+        
+        <div id="blockedList" class="blocked-list">
+            <div class="loading">Yükleniyor...</div>
+        </div>
+        
+        <button class="back-btn" onclick="window.location.href='/chat'">← Sohbete Dön</button>
+    </div>
+    
+    <script>
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = '/login.html';
+        }
+        
+        async function loadBlockedUsers() {
+            try {
+                const res = await fetch('/api/users/blocked', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const users = await res.json();
+                
+                const container = document.getElementById('blockedList');
+                
+                if (users.length === 0) {
+                    container.innerHTML = '<div class="no-blocked">Henüz engellediğiniz kullanıcı yok</div>';
+                    return;
+                }
+                
+                let html = '';
+                users.forEach(user => {
+                    const lastSeen = user.lastSeen ? new Date(user.lastSeen).toLocaleString('tr-TR') : 'Bilinmiyor';
+                    const status = user.isOnline ? 'Çevrimiçi' : `Son görülme: ${lastSeen}`;
+                    
+                    html += `
+                        <div class="blocked-item">
+                            <div class="blocked-item-info">
+                                <img class="blocked-item-avatar" 
+                                     src="${user.avatar || `https://ui-avatars.com/api/?name=${user.username}&background=3b82f6&color=fff&bold=true`}" 
+                                     alt="avatar">
+                                <div class="blocked-item-details">
+                                    <h4>${user.username}</h4>
+                                    <p>${status}</p>
+                                    <p>${user.bio || ''}</p>
+                                </div>
+                            </div>
+                            <button class="unblock-btn" onclick="unblockUser('${user.username}')">
+                                Engeli Kaldır
+                            </button>
+                        </div>
+                    `;
+                });
+                
+                container.innerHTML = html;
+                
+            } catch (err) {
+                console.error('Engellenenler yüklenemedi:', err);
+                document.getElementById('blockedList').innerHTML = '<div class="no-blocked">Hata oluştu</div>';
+            }
+        }
+        
+        async function unblockUser(username) {
+            try {
+                const res = await fetch(`/api/users/${username}/block`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await res.json();
+                
+                if (res.ok) {
+                    alert(data.message);
+                    loadBlockedUsers(); // Listeyi yenile
+                } else {
+                    alert('Hata: ' + data.message);
+                }
+                
+            } catch (err) {
+                console.error('Engel kaldırma hatası:', err);
+                alert('İşlem sırasında hata oluştu!');
+            }
+        }
+        
+        loadBlockedUsers();
+    </script>
+</body>
+</html>

@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medya Galerisi - Live Chat</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .gallery-container {
+            max-width: 1200px;
+            margin: 50px auto;
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .gallery-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .gallery-header h2 {
+            color: var(--text-primary);
+            margin-bottom: 10px;
+        }
+        
+        .gallery-header p {
+            color: var(--text-secondary);
+        }
+        
+        .gallery-filters {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .gallery-filters select,
+        .gallery-filters input {
+            padding: 10px 15px;
+            border-radius: 30px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+        
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .gallery-item {
+            background: var(--bg-primary);
+            border-radius: 15px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            transition: transform 0.2s;
+            cursor: pointer;
+        }
+        
+        .gallery-item:hover {
+            transform: translateY(-5px);
+            border-color: #3b82f6;
+        }
+        
+        .gallery-item-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            background: var(--bg-tertiary);
+        }
+        
+        .gallery-item-info {
+            padding: 12px;
+        }
+        
+        .gallery-item-user {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .gallery-item-user img {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        
+        .gallery-item-user span {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .gallery-item-date {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+        
+        .gallery-item-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 8px;
+        }
+        
+        .gallery-item-actions button {
+            background: transparent;
+            border: none;
+            color: #3b82f6;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 5px 10px;
+            border-radius: 20px;
+            transition: all 0.2s;
+        }
+        
+        .gallery-item-actions button:hover {
+            background: rgba(59, 130, 246, 0.1);
+        }
+        
+        /* Modal */
+        .gallery-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 100000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .gallery-modal.active {
+            display: flex;
+        }
+        
+        .gallery-modal-content {
+            max-width: 90%;
+            max-height: 90%;
+            position: relative;
+        }
+        
+        .gallery-modal-image {
+            max-width: 100%;
+            max-height: 90vh;
+            border-radius: 10px;
+        }
+        
+        .gallery-modal-info {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.7);
+            padding: 15px;
+            border-radius: 10px;
+            color: white;
+        }
+        
+        .gallery-modal-close {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            font-size: 40px;
+            color: white;
+            cursor: pointer;
+            z-index: 100001;
+        }
+        
+        .gallery-modal-close:hover {
+            color: #ef4444;
+        }
+        
+        .back-btn {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 10px 20px;
+            border-radius: 30px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.2s;
+        }
+        
+        .back-btn:hover {
+            background: var(--bg-tertiary);
+        }
+        
+        .loading {
+            text-align: center;
+            color: var(--text-secondary);
+            padding: 40px;
+        }
+        
+        .no-media {
+            text-align: center;
+            color: var(--text-secondary);
+            padding: 40px;
+            font-size: 16px;
+        }
+        
+        @media (max-width: 768px) {
+            .gallery-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+            
+            .gallery-item-image {
+                height: 150px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="gallery-container">
+        <div class="gallery-header">
+            <h2>🖼️ Medya Galerisi</h2>
+            <p>Paylaşılan tüm resimler burada görüntülenir</p>
+        </div>
+        
+        <div class="gallery-filters">
+            <select id="roomFilter">
+                <option value="all">Tüm Odalar</option>
+                <option value="general">General</option>
+                <option value="software">Software</option>
+                <option value="gaming">Gaming</option>
+            </select>
+            <select id="userFilter">
+                <option value="all">Tüm Kullanıcılar</option>
+            </select>
+            <input type="text" id="dateFilter" placeholder="Tarih ara (GG/AA/YYYY)">
+        </div>
+        
+        <div id="galleryGrid" class="gallery-grid">
+            <div class="loading">Yükleniyor...</div>
+        </div>
+        
+        <button class="back-btn" onclick="window.location.href='/chat'">← Sohbete Dön</button>
+    </div>
+    
+    <!-- Modal -->
+    <div id="galleryModal" class="gallery-modal">
+        <span class="gallery-modal-close" onclick="closeModal()">&times;</span>
+        <div class="gallery-modal-content">
+            <img id="modalImage" class="gallery-modal-image" src="">
+            <div class="gallery-modal-info">
+                <div id="modalUsername"></div>
+                <div id="modalDate"></div>
+                <div id="modalMessage"></div>
+                <button onclick="downloadImage()" style="margin-top: 10px; background: #3b82f6; border: none; padding: 5px 15px; border-radius: 20px; cursor: pointer;">⬇️ İndir</button>
+                <button onclick="goToMessage()" style="margin-top: 10px; background: #3b82f6; border: none; padding: 5px 15px; border-radius: 20px; cursor: pointer;">💬 Mesaja Git</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = '/login.html';
+        }
+        
+        let allImages = [];
+        let currentImage = null;
+        
+        // Tüm resimleri yükle
+        async function loadGallery() {
+            try {
+                const res = await fetch('/api/messages?room=general');
+                const messages = await res.json();
+                
+                // Sadece resim dosyalarını filtrele
+                allImages = messages.filter(msg => 
+                    msg.fileUrl && msg.fileType && msg.fileType.startsWith('image/')
+                );
+                
+                // Kullanıcı filtreleme dropdown'ını doldur
+                const users = [...new Set(allImages.map(img => img.username))];
+                const userFilter = document.getElementById('userFilter');
+                userFilter.innerHTML = '<option value="all">Tüm Kullanıcılar</option>';
+                users.forEach(user => {
+                    userFilter.innerHTML += `<option value="${user}">${user}</option>`;
+                });
+                
+                // Galeriyi göster
+                applyFilters();
+                
+            } catch (err) {
+                console.error('Galeri yüklenemedi:', err);
+                document.getElementById('galleryGrid').innerHTML = '<div class="no-media">Hata oluştu</div>';
+            }
+        }
+        
+        // Filtreleri uygula
+        function applyFilters() {
+            const roomFilter = document.getElementById('roomFilter').value;
+            const userFilter = document.getElementById('userFilter').value;
+            const dateFilter = document.getElementById('dateFilter').value;
+            
+            let filtered = [...allImages];
+            
+            if (roomFilter !== 'all') {
+                filtered = filtered.filter(img => img.room === roomFilter);
+            }
+            
+            if (userFilter !== 'all') {
+                filtered = filtered.filter(img => img.username === userFilter);
+            }
+            
+            if (dateFilter) {
+                filtered = filtered.filter(img => {
+                    const imgDate = new Date(img.createdAt).toLocaleDateString('tr-TR');
+                    return imgDate.includes(dateFilter);
+                });
+            }
+            
+            renderGallery(filtered);
+        }
+        
+        // Galeriyi render et
+        function renderGallery(images) {
+            const container = document.getElementById('galleryGrid');
+            
+            if (images.length === 0) {
+                container.innerHTML = '<div class="no-media">Henüz paylaşılmış resim yok</div>';
+                return;
+            }
+            
+            let html = '';
+            images.forEach(img => {
+                const imageUrl = img.fileUrl.startsWith('http') ? img.fileUrl : `http://localhost:3000${img.fileUrl}`;
+                const date = new Date(img.createdAt).toLocaleDateString('tr-TR');
+                const time = new Date(img.createdAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+                
+                html += `
+                    <div class="gallery-item" onclick="openModal('${imageUrl}', '${img.username}', '${date} ${time}', '${img.message || ''}', '${img._id}')">
+                        <img class="gallery-item-image" src="${imageUrl}" alt="resim" loading="lazy">
+                        <div class="gallery-item-info">
+                            <div class="gallery-item-user">
+                                <img src="${img.avatar || `https://ui-avatars.com/api/?name=${img.username}&background=3b82f6&color=fff&bold=true`}" alt="avatar">
+                                <span>${img.username}</span>
+                            </div>
+                            <div class="gallery-item-date">📅 ${date} ${time}</div>
+                            <div class="gallery-item-actions">
+                                <button onclick="event.stopPropagation(); downloadImageFromUrl('${imageUrl}', '${img.fileName || 'resim'}')">⬇️ İndir</button>
+                                <button onclick="event.stopPropagation(); goToMessageById('${img._id}')">💬 Mesaja Git</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        // Modal aç
+        let currentModalImage = null;
+        
+        function openModal(imageUrl, username, date, message, messageId) {
+            currentModalImage = { imageUrl, username, date, message, messageId };
+            const modal = document.getElementById('galleryModal');
+            const modalImage = document.getElementById('modalImage');
+            const modalUsername = document.getElementById('modalUsername');
+            const modalDate = document.getElementById('modalDate');
+            const modalMessage = document.getElementById('modalMessage');
+            
+            modalImage.src = imageUrl;
+            modalUsername.innerHTML = `👤 ${username}`;
+            modalDate.innerHTML = `📅 ${date}`;
+            modalMessage.innerHTML = message ? `💬 ${message}` : '';
+            
+            modal.classList.add('active');
+        }
+        
+        function closeModal() {
+            document.getElementById('galleryModal').classList.remove('active');
+        }
+        
+        function downloadImage() {
+            if (currentModalImage) {
+                downloadImageFromUrl(currentModalImage.imageUrl, currentModalImage.username + '_resim');
+            }
+        }
+        
+        function downloadImageFromUrl(url, filename) {
+            fetch(url)
+                .then(res => res.blob())
+                .then(blob => {
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = filename + '.jpg';
+                    link.click();
+                    URL.revokeObjectURL(link.href);
+                })
+                .catch(err => console.error('İndirme hatası:', err));
+        }
+        
+        function goToMessage() {
+            if (currentModalImage) {
+                goToMessageById(currentModalImage.messageId);
+            }
+        }
+        
+        function goToMessageById(messageId) {
+            window.location.href = `/chat?message=${messageId}`;
+        }
+        
+        // Filtre değişikliklerini dinle
+        document.getElementById('roomFilter').addEventListener('change', applyFilters);
+        document.getElementById('userFilter').addEventListener('change', applyFilters);
+        document.getElementById('dateFilter').addEventListener('input', applyFilters);
+        
+        // Sayfa yüklendiğinde
+        loadGallery();
+    </script>
+</body>
+</html>

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Chat</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="chat-wrapper">
+        <!-- BİRLEŞİK ÜST BAR -->
+        <div class="top-bar">
+            <!-- CHAT HEADER -->
+            <div id="chatHeader">
+                <span>💬 Live Chat</span>
+            <!-- Header'daki kontrol butonlarının yanına -->
+<div class="header-controls">
+    <button id="themeToggleBtn" class="theme-toggle-btn" onclick="toggleTheme()">☀️</button>
+    <a href="/search.html" class="search-link" title="Mesaj Ara">🔍</a>
+    <a href="/starred.html" class="starred-link" title="Yıldızlı Mesajlar">⭐</a>
+    <a href="/blocked.html" class="blocked-link" title="Engellenen Kullanıcılar">🚫</a>
+    <a href="/gallery.html" class="gallery-link" title="Medya Galerisi">🖼️</a>
+    <a href="/profile.html" class="profile-link">👤</a>
+   <select id="roomSelect">
+    <option value="general">🌍 General</option>
+    <option value="ai-bot">🤖 AI Asistan</option>
+</select>
+    <button id="logoutBtn">Çıkış</button>
+</div>
+            </div>
+            
+            <!-- ONLINE SIDEBAR (HEADER'IN SAĞINDA) -->
+            <div class="online-sidebar">
+                <div class="online-header">
+                    <span>👥 <span id="onlineCount">0</span></span>
+                </div>
+                <ul id="onlineUsersList" class="online-users-list">
+                    <li class="online-user">Yükleniyor...</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- CHAT KARTI -->
+        <div class="chat-card">
+            <div class="chat-messages" id="chatBox"></div>
+            <div id="typingIndicator" class="typing-indicator" style="display: none;"></div>
+          <div class="chat-bottom">
+    <button id="emojiBtn" class="emoji-btn">😊</button>
+    <button id="fileBtn" class="file-btn">📎</button>
+    <button id="viewOnceBtn" class="view-once-btn" title="Tek seferlik görüntüle">📸</button>  <!-- YENİ -->
+    <input type="text" id="messageInput" placeholder="Mesaj yaz..." autocomplete="off">
+    <button id="sendBtn">Gönder</button>
+</div>
+        </div>
+    </div>
+
+    <!-- Dosya seçme inputu (gizli) -->
+    <input type="file" id="fileInput" style="display: none;">
+    <!-- Dosya önizleme alanı -->
+    <div id="filePreview" class="file-preview" style="display: none;">
+        <div class="file-info">
+            <span id="fileName"></span>
+            <span id="fileSize"></span>
+        </div>
+        <button id="cancelFileBtn" class="cancel-file-btn">✕</button>
+    </div>
+
+    <!-- EMOJİ PANELİ -->
+    <div id="emojiPanel" class="emoji-panel" style="display: none;">
+        <div class="emoji-header">
+            <div class="emoji-tabs">
+                <button class="emoji-tab active" data-category="recent">🕒</button>
+                <button class="emoji-tab" data-category="smileys">😊</button>
+                <button class="emoji-tab" data-category="people">👋</button>
+                <button class="emoji-tab" data-category="animals">🐶</button>
+                <button class="emoji-tab" data-category="food">🍔</button>
+                <button class="emoji-tab" data-category="activities">⚽</button>
+                <button class="emoji-tab" data-category="travel">✈️</button>
+                <button class="emoji-tab" data-category="objects">💡</button>
+                <button class="emoji-tab" data-category="symbols">❤️</button>
+                <button class="emoji-tab" data-category="flags">🏁</button>
+            </div>
+            <div class="emoji-search">
+                <input type="text" id="emojiSearch" placeholder="Emoji ara...">
+            </div>
+        </div>
+        <div class="emoji-content" id="emojiContent"></div>
+    </div>
+
+    <!-- DM PANELİ -->
+    <div id="dmPanel" class="dm-panel" style="display: none;">
+        <div class="dm-header">
+            <span id="dmUsername">Yükleniyor...</span>
+            <button id="closeDmBtn" class="close-dm-btn">✕</button>
+        </div>
+        <div class="dm-messages" id="dmMessages"></div>
+        <div class="dm-bottom">
+            <button id="dmEmojiBtn" class="emoji-btn">😊</button>
+            <button id="dmFileBtn" class="file-btn">📎</button>
+            <input type="text" id="dmInput" placeholder="Mesaj yaz..." autocomplete="off">
+            <button id="dmSendBtn">Gönder</button>
+        </div>
+    </div>
+
+    <!-- DM EMOJİ PANELİ -->
+    <div id="dmEmojiPanel" class="emoji-panel" style="display: none;">
+        <div class="emoji-header">
+            <div class="emoji-tabs">
+                <button class="emoji-tab active" data-category="recent">🕒</button>
+                <button class="emoji-tab" data-category="smileys">😊</button>
+                <button class="emoji-tab" data-category="people">👋</button>
+                <button class="emoji-tab" data-category="animals">🐶</button>
+                <button class="emoji-tab" data-category="food">🍔</button>
+                <button class="emoji-tab" data-category="activities">⚽</button>
+                <button class="emoji-tab" data-category="travel">✈️</button>
+                <button class="emoji-tab" data-category="objects">💡</button>
+                <button class="emoji-tab" data-category="symbols">❤️</button>
+                <button class="emoji-tab" data-category="flags">🏁</button>
+            </div>
+            <div class="emoji-search">
+                <input type="text" id="dmEmojiSearch" placeholder="Emoji ara...">
+            </div>
+        </div>
+        <div class="emoji-content" id="dmEmojiContent"></div>
+    </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="index.js"></script>
+</body>
+</html>

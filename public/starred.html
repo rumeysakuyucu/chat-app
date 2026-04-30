@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yıldızlı Mesajlar - Live Chat</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .starred-container {
+            max-width: 800px;
+            margin: 50px auto;
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .starred-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .starred-header h2 {
+            color: var(--text-primary);
+            margin-bottom: 10px;
+        }
+        
+        .starred-header p {
+            color: var(--text-secondary);
+        }
+        
+        .starred-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .starred-item {
+            background: var(--bg-primary);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            transition: all 0.2s;
+        }
+        
+        .starred-item:hover {
+            transform: translateY(-2px);
+            border-color: #3b82f6;
+        }
+        
+        .starred-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .starred-item-user {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .starred-item-user img {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        
+        .starred-item-user span {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+        
+        .starred-item-room {
+            color: #3b82f6;
+            font-size: 12px;
+            background: rgba(59, 130, 246, 0.1);
+            padding: 3px 8px;
+            border-radius: 12px;
+        }
+        
+        .starred-item-content {
+            color: var(--text-primary);
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+        
+        .starred-item-file {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--bg-tertiary);
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        
+        .starred-item-file span {
+            color: var(--text-primary);
+        }
+        
+        .starred-item-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--text-secondary);
+            font-size: 12px;
+        }
+        
+        .starred-item-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .starred-item-actions button {
+            background: transparent;
+            border: none;
+            color: #3b82f6;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 5px 10px;
+            border-radius: 5px;
+            transition: all 0.2s;
+        }
+        
+        .starred-item-actions button:hover {
+            background: rgba(59, 130, 246, 0.1);
+        }
+        
+        .back-btn {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 10px 20px;
+            border-radius: 30px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.2s;
+        }
+        
+        .back-btn:hover {
+            background: var(--bg-tertiary);
+        }
+        
+        .loading {
+            text-align: center;
+            color: var(--text-secondary);
+            padding: 40px;
+        }
+        
+        .no-starred {
+            text-align: center;
+            color: var(--text-secondary);
+            padding: 40px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="starred-container">
+        <div class="starred-header">
+            <h2>⭐ Yıldızlı Mesajlar</h2>
+            <p>Kaydettiğin önemli mesajlar burada görüntülenir</p>
+        </div>
+        
+        <div id="starredList" class="starred-list">
+            <div class="loading">Yükleniyor...</div>
+        </div>
+        
+        <button class="back-btn" onclick="window.location.href='/chat'">← Sohbete Dön</button>
+    </div>
+    
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = '/login.html';
+        }
+        
+        // Yıldızlı mesajları yükle
+        async function loadStarredMessages() {
+            try {
+                const res = await fetch('/api/users/starred-messages', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const messages = await res.json();
+                
+                const container = document.getElementById('starredList');
+                
+                if (messages.length === 0) {
+                    container.innerHTML = '<div class="no-starred">Henüz yıldızlı mesajınız yok</div>';
+                    return;
+                }
+                
+                let html = '';
+                messages.forEach(msg => {
+                    const time = new Date(msg.createdAt).toLocaleString('tr-TR');
+                    
+                    html += `
+                        <div class="starred-item">
+                            <div class="starred-item-header">
+                                <div class="starred-item-user">
+                                    <img src="${msg.avatar || `https://ui-avatars.com/api/?name=${msg.username}&background=3b82f6&color=fff&bold=true`}" alt="avatar">
+                                    <span>${msg.username}</span>
+                                </div>
+                                <span class="starred-item-room">📌 ${msg.room}</span>
+                            </div>
+                            
+                            <div class="starred-item-content">
+                                ${msg.message || ''}
+                            </div>
+                            
+                            ${msg.fileUrl ? `
+                                <div class="starred-item-file">
+                                    <span>${msg.fileType?.startsWith('image/') ? '📷' : '📎'}</span>
+                                    <span>${msg.fileName || 'Dosya'}</span>
+                                </div>
+                            ` : ''}
+                            
+                            <div class="starred-item-footer">
+                                <span>📅 ${time}</span>
+                                <div class="starred-item-actions">
+                                    <button onclick="goToMessage('${msg._id}')">🔍 Mesaja Git</button>
+                                    <button onclick="removeStar('${msg._id}', this)">⭐ Yıldızdan Çıkar</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                container.innerHTML = html;
+                
+            } catch (err) {
+                console.error('Yıldızlı mesajlar yüklenemedi:', err);
+                document.getElementById('starredList').innerHTML = '<div class="no-starred">Hata oluştu</div>';
+            }
+        }
+        
+        // Mesaja git
+        window.goToMessage = function(messageId) {
+            window.location.href = `/chat?message=${messageId}`;
+        };
+        
+        // Yıldızdan çıkar
+        window.removeStar = async function(messageId, button) {
+            try {
+                const res = await fetch(`/api/messages/${messageId}/star`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (res.ok) {
+                    // Listeyi yenile
+                    loadStarredMessages();
+                }
+                
+            } catch (err) {
+                console.error('Yıldız kaldırma hatası:', err);
+            }
+        };
+        
+        // Sayfa yüklendiğinde
+        loadStarredMessages();
+    </script>
+</body>
+</html>

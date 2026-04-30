@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profilim - Live Chat</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* CSS stillerin burada kalacak */
+        .profile-container {
+            max-width: 600px;
+            margin: 50px auto;
+            background: #1e293b;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            border: 1px solid #334155;
+        }
+        
+        .profile-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .profile-header h2 {
+            color: #f1f5f9;
+            margin-bottom: 10px;
+        }
+        
+        .avatar-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .avatar-preview {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: #334155;
+            border: 3px solid #3b82f6;
+            margin-bottom: 20px;
+            object-fit: cover;
+        }
+        
+        .avatar-upload {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .avatar-upload input[type="file"] {
+            display: none;
+        }
+        
+        .avatar-upload label {
+            background: #3b82f6;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .avatar-upload label:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+        }
+        
+        /* YENİ - Bio Alanı */
+        .bio-container {
+            background: #0f172a;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .bio-container h3 {
+            color: #f1f5f9;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        
+        #bioText {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid #334155;
+            background: #1e293b;
+            color: white;
+            font-size: 14px;
+            resize: vertical;
+            margin-bottom: 10px;
+        }
+        
+        #bioText:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+        
+        .char-count {
+            text-align: right;
+            font-size: 12px;
+            color: #94a3b8;
+            margin-bottom: 10px;
+        }
+        
+        .save-bio-btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        
+        .save-bio-btn:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+        }
+        
+        .online-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .online-badge.online {
+            background: #10b981;
+            color: white;
+        }
+        
+        .online-badge.offline {
+            background: #334155;
+            color: #94a3b8;
+        }
+        
+        .profile-info {
+            background: #0f172a;
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .info-row {
+            display: flex;
+            padding: 10px 0;
+            border-bottom: 1px solid #334155;
+        }
+        
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        
+        .info-label {
+            width: 120px;
+            color: #94a3b8;
+            font-weight: 500;
+        }
+        
+        .info-value {
+            color: #f1f5f9;
+            flex: 1;
+        }
+        
+        .back-btn {
+            background: transparent;
+            border: 1px solid #334155;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.2s;
+        }
+        
+        .back-btn:hover {
+            background: #334155;
+        }
+        
+        .loading {
+            text-align: center;
+            color: #94a3b8;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="profile-container">
+        <div class="profile-header">
+            <h2>👤 Profilim</h2>
+        </div>
+        
+        <div class="avatar-container">
+            <img id="avatarPreview" class="avatar-preview" src="https://ui-avatars.com/api/?name=User&background=3b82f6&color=fff" alt="Avatar">
+            
+            <div class="avatar-upload">
+                <input type="file" id="avatarInput" accept="image/*">
+                <label for="avatarInput">📸 Resim Seç</label>
+                <button id="saveAvatarBtn" class="btn btn-primary" style="display: none;">💾 Kaydet</button>
+            </div>
+        </div>
+        
+        <!-- Hakkımda Alanı -->
+        <div class="bio-container">
+            <h3>📝 Hakkımda</h3>
+            <textarea id="bioText" placeholder="Kendinizden bahsedin... (max 150 karakter)" maxlength="150"></textarea>
+            <div class="char-count"><span id="charCount">0</span>/150</div>
+            <button id="saveBioBtn" class="save-bio-btn">💾 Kaydet</button>
+        </div>
+        
+        <div class="profile-info" id="profileInfo">
+            <div class="loading">Yükleniyor...</div>
+        </div>
+        
+        <button class="back-btn" onclick="window.location.href='/chat'">← Sohbete Dön</button>
+    </div>
+    
+    <!-- Socket.IO script -->
+    <script src="/socket.io/socket.io.js"></script>
+    <!-- Profil JS -->
+    <script src="profile.js"></script>
+</body>
+</html>
