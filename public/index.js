@@ -339,6 +339,11 @@ window.addMessageToChat = function(msg) {
 if (msg.username === localStorage.getItem("username")) {
     html += `<button onclick="editMessage('${msg._id}', '${(msg.message || '').replace(/'/g, "\\'")}')" style="background:transparent; border:none; cursor:pointer; font-size:14px;">✏️</button>`;
 }
+// 🟢 SİLME BUTONU - BURAYA EKLE
+if (msg.username === localStorage.getItem("username")) {
+    html += `<button onclick="deleteMessage('${msg._id}')" style="background:transparent; border:none; cursor:pointer; font-size:14px;" title="Sil">🗑️</button>`;
+}
+
     const userRole = localStorage.getItem('role');
     if (userRole === 'admin' || userRole === 'moderator') {
         html += `<button onclick="togglePin('${msg._id}', '${msg.room}', this)" style="background:transparent; border:none; cursor:pointer;">${msg.isPinned ? '📌' : '📍'}</button>`;
@@ -461,7 +466,18 @@ window.socket.on("message edited", (data) => {
         if (timeDiv) timeDiv.before(editedSpan);
     }
 });
+    // ========== MESAJ SİLİNDİ EVENTİ ==========
+window.socket.on("message deleted", (data) => {
+    console.log("🗑️ SİLİNDİ BİLDİRİMİ GELDİ:", data.id);
     
+    const messageDiv = document.querySelector(`[data-message-id="${data.id}"]`);
+    if (messageDiv) {
+        messageDiv.remove();
+        console.log("✅ Mesaj DOM'dan kaldırıldı:", data.id);
+    } else {
+        console.log("❌ Mesaj DOM'da bulunamadı:", data.id);
+    }
+});
    // ========== BUTON OLAYLARI ==========
 sendBtn.addEventListener('click', (e) => { e.preventDefault(); window.sendMessage(); });
 messageInput.addEventListener('keypress', (e) => { if (e.key === "Enter") { e.preventDefault(); window.sendMessage(); } });
@@ -632,7 +648,7 @@ window.emojiDB = {
             }
         } catch (err) { console.error('Durum kontrol hatası:', err); }
     };
-    
+
     // ========== SABİTLEME FONKSİYONLARI ==========
     window.loadPinnedMessages = async function(room) {
         try {
@@ -1103,6 +1119,13 @@ window.cancelQuote = function() {
             messageDiv.remove();
         }
     }, 5000);
+};
+// ========== MESAJ SİLME ==========
+window.deleteMessage = function(messageId) {
+    if (!confirm('Bu mesajı silmek istediğine emin misin?')) return;
+    if (window.socket) {
+        window.socket.emit("delete message", messageId);
+    }
 };
 // ========== YAZIYOR BİLDİRİMLERİ ==========
 let typingTimeout;

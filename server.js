@@ -621,6 +621,37 @@ io.on("connection", async (socket) => {
             console.error("Mesaj düzenleme hatası:", err);
         }
     });
+// ===================== MESAJ SİLME =====================
+socket.on("delete message", async (messageId) => {
+    console.log("🗑️ Silme isteği geldi:", messageId);
+    
+    try {
+        // Mesajı bul
+        const message = await Message.findById(messageId);
+        if (!message) {
+            console.log("❌ Mesaj bulunamadı");
+            return;
+        }
+        
+        // Sadece mesajın sahibi silebilir
+        if (message.username !== socket.user.username) {
+            console.log("❌ Yetkisiz silme girişimi:", socket.user.username);
+            socket.emit("error message", "❌ Sadece kendi mesajlarınızı silebilirsiniz!");
+            return;
+        }
+        
+        // Mesajı sil
+        await Message.deleteOne({ _id: messageId });
+        
+        // Odadaki herkese bildir
+        io.to(message.room).emit("message deleted", { id: messageId });
+        
+        console.log("✅ Mesaj silindi:", messageId);
+        
+    } catch (err) {
+        console.error("❌ Silme hatası:", err);
+    }
+});
 /* ===================== MESAJ GÖNDER ===================== */
 socket.on("chat message", async (data) => {
     console.log("🔍 1. GELEN viewOnce:", data.viewOnce);
