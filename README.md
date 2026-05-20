@@ -17,14 +17,22 @@ Kullanıcıların gerçek zamanlı mesajlaşmasını sağlayan modern bir web uy
 - 🎨 Dark/Light tema
 - 📱 Mobil uyumlu
 
-## 🛠️ Teknolojiler
-
+## Teknolojiler
 - Node.js - Sunucu
+- Express.js - Web framework
+
+## Backend Teknolojileri
+- Node.js - JavaScript runtime
 - Express.js - Web framework
 - Socket.IO - Gerçek zamanlı iletişim
 - MongoDB - Veritabanı
 - JWT - Kimlik doğrulama
-- HTML/CSS/JS - Frontend
+
+## Frontend Teknolojileri
+- HTML5
+- CSS3
+- JavaScript (Vanilla)
+- Socket.IO Client
 
 ## 📥 Kurulum
 
