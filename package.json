@@ -8,6 +8,9 @@
     "dev": "nodemon server.js"
   },
   "dependencies": {
+    "@capacitor/android": "^8.3.3",
+    "@capacitor/cli": "^8.3.4",
+    "@capacitor/core": "^8.3.4",
     "bcrypt": "^5.1.1",
     "dotenv": "^16.3.1",
     "dotevn": "^0.0.1-security",

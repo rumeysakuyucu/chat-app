@@ -89,14 +89,14 @@ document.addEventListener("DOMContentLoaded", () => {
     let replyPreview = null;
     
     // ========== SOCKET TANIMI ==========
-    window.socket = io('http://localhost:3000', { 
-        auth: { token },
-        transports: ['websocket', 'polling'],
-        reconnection: true,
-        reconnectionAttempts: 10,
-        reconnectionDelay: 1000,
-        timeout: 20000
-    });
+    window.socket = io('http://localhost:3000', {
+    auth: { token },
+    transports: ['websocket', 'polling'],
+    reconnection: true,
+    reconnectionAttempts: 10,
+    reconnectionDelay: 1000,
+    timeout: 20000
+});
     
     window.socket.on('connect', () => {
         console.log('✅ Socket BAĞLANDI! ID:', window.socket.id);

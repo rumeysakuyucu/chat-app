@@ -1,3 +1,4 @@
+const Room = require("./models/Room");
 const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
@@ -12,6 +13,12 @@ const Message = require("./models/Message");
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, "public")));
+app.use('/sounds', express.static(path.join(__dirname, 'public/sounds')));  // SES DOSYALARI
+
 // JWT Secret
 const JWT_SECRET = process.env.JWT_SECRET;
 // ===================== AUTH MIDDLEWARE =====================
@@ -166,7 +173,6 @@ app.post('/upload', authMiddleware, upload.single('file'), async (req, res) => {
 });
 
 // Statik dosyaları servis et
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // AI cevap dosyasını oku
 let aiResponses = {};
 try {
@@ -178,14 +184,9 @@ try {
 }
 
 /* ===================== MIDDLEWARE ===================== */
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, "public")));
-app.use('/sounds', express.static(path.join(__dirname, 'public/sounds')));  // SES DOSYALARI
 
 // İlk odaları oluştur
 async function createDefaultRooms() {
-    const Room = require("./models/Room");
     const defaultRooms = ['general'];
     
     for (const roomName of defaultRooms) {
@@ -338,15 +339,6 @@ app.post('/api/users/avatar', authMiddleware, upload.single('avatar'), async (re
     }
 });
 
-// Kullanıcı profil bilgilerini getir
-app.get('/api/users/profile', authMiddleware, async (req, res) => {
-    try {
-        const user = await User.findById(req.user.id).select('-password');
-        res.json(user);
-    } catch (err) {
-        res.status(500).json({ message: 'Profil bilgileri alınamadı' });
-    }
-});
 // GİRİŞ YAP
 app.post("/login", async (req, res) => {
     try {
@@ -435,7 +427,6 @@ app.post('/api/messages/:messageId/pin', authMiddleware, async (req, res) => {
         await message.save();
         
         // Oda bilgilerini güncelle
-        const Room = require('./models/Room');
         const roomDoc = await Room.findOne({ name: room });
         if (roomDoc) {
             if (message.isPinned) {
@@ -456,24 +447,6 @@ app.post('/api/messages/:messageId/pin', authMiddleware, async (req, res) => {
     } catch (err) {
         console.error('Sabitleme hatası:', err);
         res.status(500).json({ message: 'İşlem başarısız' });
-    }
-});
-
-// Odanın sabitlenmiş mesajlarını getir
-app.get('/api/rooms/:room/pinned-messages', authMiddleware, async (req, res) => {
-    try {
-        const { room } = req.params;
-        
-        const messages = await Message.find({
-            room: room,
-            isPinned: true
-        }).sort({ pinnedAt: -1 });
-        
-        res.json(messages);
-        
-    } catch (err) {
-        console.error('Sabitlenmiş mesajlar getirme hatası:', err);
-        res.status(500).json({ message: 'Mesajlar alınamadı' });
     }
 });
 
@@ -938,25 +911,6 @@ socket.on("stop typing", (data) => {
     console.log('⏹️ Stop typing alındı:', data);
     socket.to(data.room).emit("user stop typing", data.username); // sadece username gönder
 });
-/* ===================== MESAJ SİLME ===================== */
-socket.on("delete message", async (messageId) => {
-    try {
-        const message = await Message.findById(messageId);
-        
-        if (message && message.username === socket.user.username) {
-            message.isDeleted = true;
-            message.deletedBy = socket.user.username;
-            await message.save();
-            
-            io.to(message.room).emit("message deleted", {
-                id: messageId,
-                username: socket.user.username
-            });
-        }
-    } catch (err) {
-        console.error("Mesaj silme hatası:", err);
-    }
-});
 
 /* ===================== BAĞLANTI KOPAR ===================== */
 socket.on("disconnect", async () => {
@@ -1046,23 +1000,6 @@ app.get('/api/users/:username/is-blocked', authMiddleware, async (req, res) => {
         res.status(500).json({ message: 'İşlem başarısız' });
     }
 });
-// Engellenen kullanıcıları getir
-app.get('/api/users/blocked', authMiddleware, async (req, res) => {
-    try {
-        const user = await User.findById(req.user.id);
-        
-        // Engellenen kullanıcıların detaylarını getir
-        const blockedUsers = await User.find({
-            username: { $in: user.blockedUsers }
-        }).select('username avatar bio lastSeen isOnline');
-        
-        res.json(blockedUsers);
-        
-    } catch (err) {
-        console.error('Engellenenler getirme hatası:', err);
-        res.status(500).json({ message: 'Liste alınamadı' });
-    }
-});
 
 /* ===================== 404 HANDLER ===================== */
 app.use((req, res) => {
@@ -1072,5 +1009,5 @@ app.use((req, res) => {
 /* ===================== SERVER BAŞLAT ===================== */
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-    console.log(`🚀 Server çalışıyor: http://localhost:${PORT}`);
+    console.log(`🚀 Server çalışıyor: http://0.0.0.0:${PORT}`);
 });

@@ -1,0 +1,21 @@
+# Bağımlılıklar
+node_modules/
+.env
+
+# Uploads ve geçici dosyalar
+uploads/
+.DS_Store
+*.log
+
+# Android/Capacitor (mobil çevirme için eklenenler)
+android/
+capacitor.config.json
+
+# IDE ve editör dosyaları
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
